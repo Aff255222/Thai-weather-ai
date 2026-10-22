@@ -57,7 +57,8 @@ button.dr{width:100%;text-align:left;background:none;border:0;border-top:1px sol
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.kv>div{background:var(--glass);border-radius:14px;padding:10px;font-size:14px;color:var(--mut)}.kv b{display:block;font-size:20px;color:var(--ink)}
 :root{--ok:#6ee7b7}@media(prefers-color-scheme:light){:root{--ok:#0b7a4b}}
 .lv[data-lv=low]{color:var(--ok)}.lv[data-lv=moderate]{color:var(--warn)}.lv[data-lv=high]{color:var(--bad)}
-.dam{display:grid;grid-template-columns:130px 1fr 90px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.dam i{display:block;height:10px;border-radius:9px;background:var(--line);overflow:hidden}.dam u{display:block;height:100%}
+.dam{display:grid;grid-template-columns:120px 1fr 120px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.dam i{display:block;height:10px;border-radius:9px;background:var(--line);overflow:hidden}.dam u{display:block;height:100%}
+.dam .sub{grid-column:1/-1;color:var(--mut);font-size:13px;margin-top:-4px}.wtab{overflow-x:auto}.wtab table{font-size:13px;min-width:520px}.wtab td:not(:first-child),.wtab th:not(:first-child){text-align:right}details.all{margin-top:12px}details.all summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
 .hm{max-width:320px;margin:auto}.bar2{height:10px;border-radius:9px;background:linear-gradient(90deg,hsl(150 45% 35%),hsl(30 45% 60%))}
 </style></head><body>
 <header><div class="bar">
@@ -198,15 +199,44 @@ function floodRisk(){const h=S.data.hourly,i=S.ni,sum=n=>{const a=h.precipitatio
 const LV={low:'ต่ำ',moderate:'ปานกลาง',high:'สูง',insufficient:'ข้อมูลไม่พอ'};
 function terrSvg(t){let g='';for(let r=0;r<7;r++)for(let c=0;c<7;c++){const e=t.e[r*7+c],u=(e-t.mn)/((t.mx-t.mn)||1);g+=`<rect x="${c*40}" y="${r*40}" width="40" height="40" fill="hsl(${150-120*u} 45% ${35+25*u}%)"><title>${r1(e)} ม. จากระดับน้ำทะเล</title></rect>`}
  return`<svg class="hm" viewBox="0 0 280 280" role="img" aria-label="แผนผังระดับความสูงโดยรอบ เหนืออยู่ด้านบน">${g}<circle cx="140" cy="140" r="9" fill="none" stroke="#fff" stroke-width="3"/><circle cx="140" cy="140" r="3" fill="#fff"/><text x="140" y="12" text-anchor="middle" font-size="12" fill="#fff" stroke="#000" stroke-width=".4">เหนือ</text></svg><div class="hm"><div class="bar2"></div><div class="mut" style="display:flex;justify-content:space-between"><span>ต่ำ ${r1(t.mn)} ม.</span><span>สูง ${r1(t.mx)} ม.</span></div></div>`}
-const DAMS=['ภูมิพล','สิริกิติ์','ป่าสักชลสิทธิ์','แควน้อยบำรุงแดน'];
-const damBand=p=>p==null?['ไม่มีข้อมูล','var(--line)']:p<30?['น้อยวิกฤต','var(--bad)']:p<50?['น้อย','var(--warn)']:p<80?['ปานกลาง','var(--ok)']:p<=100?['มาก','var(--acc)']:['ล้นความจุ','var(--bad)'];
+const DAMS=['ภูมิพล','สิริกิติ์','ป่าสัก','แควน้อย'],DAMN={'ภูมิพล':'ภูมิพล','สิริกิติ์':'สิริกิติ์','ป่าสัก':'ป่าสักชลสิทธิ์','แควน้อย':'แควน้อยบำรุงแดน'};
+const WURL='https://tiwrmdev.hii.or.th/DATA/REPORT/php/rid_bigcm_raw.php';
+/* ภาพรวมที่บันทึกไว้ (คัดลอกมือ) จากรายงานสถานภาพน้ำเขื่อนต่างๆ ของ สสน. (ข้อมูลกรมชลประทาน) ประจำวันที่ 22 ต.ค. 2569 — ดึงเมื่อ 22 ต.ค. 2569 13:45 น. ใช้เมื่อเชื่อมต่อสดไม่ได้ แถว: [ชื่อ,ความจุที่ รนก.,น้ำในอ่าง,%รนก.,ใช้การได้จริง,%ใช้การได้,ไหลลงวันนี้,ระบายวันนี้] หน่วยล้าน ลบ.ม. */
+const WSNAP={date:'22 ตุลาคม 2569',got:'22 ต.ค. 2569 13:45 น.',rows:[["ภูมิพล",13462,9524,71,5724.0,43,15.92,5.0],["สิริกิติ์",9510,7772,82,4921.98,52,10.71,9.94],["แม่งัด",265,255,96,242.37,92,0.53,0.03],["กิ่วลม",106,96,90,92.22,87,1.38,2.32],["แม่กวง",263,180,68,166.11,63,0.33,0.81],["กิ่วคอหมา",170,164,96,157.46,93,0,0.4],["แควน้อยบำรุงแดน",939,801,85,758.4,81,2.06,0.86],["แม่มอก",110,98,89,82.06,75,0.05,0.12],["ลำปาว",1980,1169,59,1069.4,54,1.28,4.61],["ลำตะคอง",314,264,84,241.6,77,0.91,0.17],["ลำพระเพลิง",155,127,82,125.16,81,0.35,0.5],["น้ำอูน",520,308,59,262.5,50,0.69,1.65],["อุบลรัตน์",2431,1444,59,861.99,35,0.24,4.53],["สิรินธร",1966,1865,95,1033.18,53,2.75,1.81],["จุฬาภรณ์",164,137,84,100.01,61,0.61,0],["ห้วยหลวง",136,79,59,72.84,54,0,0.77],["ลำนางรอง",121,63,52,59.74,49,0.6,0],["มูลบน",141,90,64,82.99,59,0.38,0.6],["น้ำพุง",165,87,53,78.59,48,0.07,0],["ลำแซะ",275,176,64,169.22,62,0.63,1.24],["ป่าสักชลสิทธิ์",872,806,92,791.15,91,2.86,0.87],["กระเสียว",299,220,74,180.0,60,9.23,0.06],["ทับเสลา",160,156,97,138.93,87,1.58,0.6],["ศรีนครินทร์",17745,17569,99,7304.4,41,35.48,40.18],["วชิราลงกรณ",8860,8641,98,5628.6,64,12.26,15.06],["บางพระ",117,108,92,96.02,82,0.52,0.34],["หนองปลาไหล",164,180,110,166.01,101,2.51,3.7],["คลองสียัด",420,368,88,337.5,80,2.15,0.01],["ขุนด่านปราการชล",224,216,97,211.96,95,1.26,1.31],["ประแสร์",295,268,91,248.24,84,0.61,0.44],["นฤบดินทรจินดา",295,287,97,272.84,93,1.6,1.0],["แก่งกระจาน",710,708,100,643.18,91,4.07,8.64],["ปราณบุรี",391,316,81,298.69,76,3.27,2.32],["รัชชประภา",5639,4267,76,2915.64,52,6.43,2.99],["บางลาง",1454,764,53,487.34,34,9.68,3.98]]};
+let W=null,wq=0,WE=null;
+const damBand=p=>p==null?['ไม่มีข้อมูล','var(--line)']:p<=30?['น้อยวิกฤต','var(--bad)']:p<=50?['น้อย','var(--warn)']:p<=80?['ปานกลาง','var(--ok)']:p<=100?['มาก','var(--acc)']:['ล้นความจุ','var(--bad)'];
+const fm=(v,d=0)=>v==null||!isFinite(v)?'–':(+v).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const dn=n=>String(n).replace(/^เขื่อน/,'').replace(/ฯ$/,'').trim();
+async function loadWater(){const my=++wq;
+ try{const r=await tmo(fetch(WURL,{cache:'no-store'}),12000);if(!r.ok)throw new Error('HTTP '+r.status);
+  const doc=new DOMParser().parseFromString(await tmo(r.text(),12000),'text/html'),rows=[];
+  doc.querySelectorAll('tr').forEach(tr=>{const c=[...tr.children].map(x=>x.textContent.replace(/\s+/g,' ').trim());
+   if(c.length<13||!/^เขื่อน/.test(c[0]))return;const n=c.slice(1,13).map(x=>parseFloat(x.replace(/,/g,'')));
+   if(![0,2,3,4,5].every(k=>isFinite(n[k])))return;rows.push([dn(c[0]),n[0],n[2],n[3],n[4],n[5],isFinite(n[7])?n[7]:null,isFinite(n[10])?n[10]:null])});
+  if(rows.length<30)throw new Error('อ่านตารางเขื่อนไม่ครบ (พบ '+rows.length+' แห่ง) รูปแบบหน้าเว็บอาจเปลี่ยน');
+  if(rows.some(x=>x[3]<0||x[3]>200))throw new Error('ค่าร้อยละผิดปกติ');
+  const m=(doc.title||'').match(/วันที่\s*(.+)$/);
+  if(my!==wq)return;W={rows,date:m?m[1].trim():null,at:Date.now()};WE=null}
+ catch(e){if(my!==wq)return;WE=String(e&&e.message||e)}
+ renderExtra()}
+function waterHtml(){const live=!!W,src=live?W:WSNAP,rows=src.rows,when=live?D(Math.floor(W.at/1000),{dateStyle:'medium',timeStyle:'short'})+' น.':WSNAP.got;
+ const find=k=>rows.find(r=>r[0].startsWith(k)),tot=rows.reduce((a,r)=>[a[0]+r[1],a[1]+r[2]],[0,0]);
+ let h=`<p><span class="badge">${live?'ข้อมูลสด (ดึงจากเบราว์เซอร์)':'ภาพรวมที่บันทึกไว้ — ไม่ใช่ข้อมูลสด'}</span></p>`+
+ `<p class="mut">รายงานสถานภาพน้ำเขื่อนต่างๆ ประจำวันที่ <b>${esc(src.date||WSNAP.date)}</b> · ดึงข้อมูลเมื่อ <b>${esc(when)}</b> · ที่มา: กรมชลประทาน จัดทำโดย สสน. (Thaiwater) — หน้ารายงานระบุเฉพาะวันที่ ไม่ระบุเวลาอัปเดตของเขื่อนทั่วไป (ระบุเวลา 06:00 น. เฉพาะเขื่อนเจ้าพระยา)</p>`;
+ if(!live&&!WE)h+=`<p class="mut" role="status">กำลังเชื่อมต่อข้อมูลสด… ระหว่างนี้แสดงค่าที่คัดลอกไว้เมื่อ ${esc(WSNAP.got)}</p>`;
+ if(!live&&WE)h+=`<p class="err" role="status">เชื่อมต่อข้อมูลสดไม่ได้ (${esc(WE)}) — ที่เห็นคือค่าที่คัดลอกไว้เมื่อ ${esc(WSNAP.got)} ซึ่งอาจเก่ากว่าปัจจุบัน (สาเหตุที่พบบ่อยคือเซิร์ฟเวอร์ต้นทางไม่อนุญาตการเรียกข้าม origin/CORS) ดูข้อมูลล่าสุดที่ <a style="color:var(--acc)" href="https://www.thaiwater.net/" target="_blank" rel="noopener">thaiwater.net</a></p>`;
+ h+=DAMS.map(k=>{const r=find(k);if(!r)return`<div class="dam"><span>เขื่อน${DAMN[k]}</span><i><u style="width:0"></u></i><span class="na">ไม่มีข้อมูล</span></div>`;const b=damBand(r[3]);
+  return`<div class="dam"><span>เขื่อน${DAMN[k]}</span><i><u style="width:${Math.min(100,Math.max(0,r[3]))}%;background:${b[1]}"></u></i><span><b>${fm(r[3])}%</b> ${b[0]}</span><span class="sub">น้ำในอ่าง ${fm(r[2])} จากความจุ ${fm(r[1])} ล้าน ลบ.ม. · ใช้การได้จริง ${fm(r[4])} (${fm(r[5])}%) · ไหลลงวันนี้ ${fm(r[6],2)} · ระบายวันนี้ ${fm(r[7],2)}</span></div>`}).join('');
+ h+=`<p class="mut">รวม ${rows.length} เขื่อนขนาดใหญ่: น้ำในอ่าง ${fm(tot[1])} จากความจุ ${fm(tot[0])} ล้าน ลบ.ม. (${fm(tot[1]/tot[0]*100,1)}% — คำนวณจากแถวที่แสดง ไม่ใช่ตัวเลขรวมของต้นทาง) · เกณฑ์สี % ของความจุเก็บกัก: ≤30 น้อยวิกฤต, &gt;30–50 น้อย, &gt;50–80 ปานกลาง, &gt;80–100 มาก, &gt;100 เกินความจุเก็บกัก (ตามรายงานต้นทาง) · หน่วยปริมาณน้ำ: ล้าน ลบ.ม.</p>`;
+ h+=`<details class="all"><summary>ดูเขื่อนขนาดใหญ่ทั้งหมด ${rows.length} แห่ง</summary><div class="wtab"><table><thead><tr><th>เขื่อน</th><th>% รนก.</th><th>น้ำในอ่าง</th><th>ใช้การได้</th><th>ไหลลง</th><th>ระบาย</th></tr></thead><tbody>`+rows.map(r=>`<tr><td>${esc(r[0])}</td><td style="color:${damBand(r[3])[1]}">${fm(r[3])}</td><td>${fm(r[2])}</td><td>${fm(r[4])}</td><td>${fm(r[6],2)}</td><td>${fm(r[7],2)}</td></tr>`).join('')+`</tbody></table></div></details>`;
+ return h}
 function renderExtra(){const d=S.data,F=$('#floodc');
  if(!d)F.innerHTML=busy?'<div class="sk" style="height:260px"></div>':'<p class="na">ไม่มีข้อมูล</p>';
  else{const r=floodRisk(),t=S.terr,h=d.hourly,i=S.ni,ap=h.apparent_temperature?h.apparent_temperature.slice(0,24).filter(x=>x!=null):[],hot=ap.length?Math.max(...ap):null;
   F.innerHTML=`<p class="mut">จุดพิกัด ${loc.lat}, ${loc.lon} — ความสูงจากแบบจำลองความสูงภูมิประเทศผ่าน Open-Meteo Elevation API (ตาราง 7×7 ห่างกันราว 2.8 กม. ครอบคลุมรัศมีราว 8 กม.)</p>`+(t&&!t.error?terrSvg(t):`<p class="err">โหลดแผนผังระดับความสูงไม่ได้: ${esc(t?t.error:'ไม่มีข้อมูล')}</p>`)+
   `<div class="kv">${kv('ความสูงที่จุดนี้',t&&!t.error?t.c:d.elevation,'ม.',0)}${t&&!t.error?kv('ต่างระดับในพื้นที่',t.relief,'ม.',0):''}${kv('ความกดอากาศ (ระดับน้ำทะเล)',h.pressure_msl?h.pressure_msl[i]:d.current.pressure_msl,'hPa',0)}${kv('ค่ารู้สึกเหมือนสูงสุดวันนี้',hot,'°C',1)}${kv('อุณหภูมิสูงสุดวันนี้',d.daily.temperature_2m_max[0],'°C',0)}</div><p class="mut">ความกดอากาศและความร้อนเป็นค่าที่จุดพิกัด ไม่ใช่ค่าเฉลี่ยพื้นที่</p>`+
   `<h3 style="margin:14px 0 4px">โอกาสเกิดน้ำท่วม (ประเมินเบื้องต้น)</h3><div class="lvl lv" data-lv="${r.level}">ความเสี่ยง${LV[r.level]}</div><ul>${r.why.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul><p class="mut">ประเมินแบบกฎจากฝนสะสมตามแบบจำลองและตำแหน่งเทียบพื้นที่โดยรอบ (เกณฑ์ฝนรายวัน &lt;10, 10–35, 35–90, &gt;90 มม.) ยังไม่ผ่านการสอบเทียบกับเหตุการณ์จริง ไม่รวมระดับน้ำในแม่น้ำ ลุ่มน้ำ ความชื้นดิน และระบบระบายน้ำ ไม่ใช่คำเตือนอย่างเป็นทางการ โปรดติดตามประกาศของกรมอุตุนิยมวิทยา ปภ. และ สสน.</p>`}
- $('#waterc').innerHTML=`<p class="err">ยังไม่ได้เชื่อมต่อคลังข้อมูลน้ำ ThaiWater: ไม่พบจุดเชื่อมต่อ (endpoint) สาธารณะพร้อมเอกสารและการรองรับ CORS ที่ยืนยันได้ จึงไม่แสดงตัวเลขใดๆ แทนค่าจริง ดูข้อมูลล่าสุดได้ที่ <a style="color:var(--acc)" href="https://www.thaiwater.net/" target="_blank" rel="noopener">thaiwater.net</a></p><p class="mut">เขื่อนหลักลุ่มน้ำเจ้าพระยาที่จะแสดงเมื่อเชื่อมต่อได้ พร้อมสีตามน้ำใช้การได้เทียบความจุ (&lt;30% น้อยวิกฤต, 30–50 น้อย, 50–80 ปานกลาง, 80–100 มาก, &gt;100 ล้นความจุ — เกณฑ์ที่ใช้แสดงผลในหน้านี้)</p>`+DAMS.map(n=>{const b=damBand(null);return`<div class="dam"><span>เขื่อน${n}</span><i><u style="width:0;background:${b[1]}"></u></i><span class="na">${b[0]}</span></div>`}).join('');
+ $('#waterc').innerHTML=waterHtml();
  const g=agreement(),A=$('#accc');
  A.innerHTML=g&&g.avg!=null?`<div class="lvl">${g.avg.toFixed(0)}%</div><div>ดัชนีความสอดคล้องของแบบจำลองโดยเฉลี่ย (ไม่ใช่ความแม่นยำ)</div><div class="kv">${g.tp==null?'':`<div>อุณหภูมิ: ชั่วโมงที่ทุกแบบจำลองต่างกันไม่เกิน 1 °C<b>${g.tp.toFixed(0)}%</b></div>`}${g.rp==null?'':`<div>ฝน: ชั่วโมงที่ทุกแบบจำลองตรงกันว่ามีฝน/ไม่มีฝน (เกณฑ์ 0.1 มม./ชม.)<b>${g.rp.toFixed(0)}%</b></div>`}<div>แบบจำลองที่ใช้<b>${g.k} แบบ</b></div><div>ช่วงเวลา<b>48 ชม.ข้างหน้า</b></div></div><p class="mut">คำนวณจาก ${g.k} แบบจำลองที่ส่งข้อมูลมาจริงเท่านั้น (ค่าเฉลี่ยของตัวชี้วัดที่คำนวณได้) แบบจำลองที่เห็นตรงกันอาจผิดพร้อมกันได้ จึงไม่เรียกว่าความแม่นยำ</p><p class="na">ความแม่นยำจริง (MAE, RMSE, Brier score เทียบค่าตรวจวัด) ยังไม่มีข้อมูล: ต้องสะสมพยากรณ์ย้อนหลังและค่าตรวจวัดที่ผ่านการตรวจสอบก่อน ระบบนี้ไม่แสดงเปอร์เซ็นต์ความแม่นยำที่ไม่มีหลักฐานรองรับ</p>`:`<p class="na">ยังคำนวณดัชนีความสอดคล้องไม่ได้ ${S.models&&!S.models.error?'(ต้องมีข้อมูลอย่างน้อย 2 แบบจำลอง)':'(ยังไม่มีข้อมูลหลายแบบจำลอง)'} และความแม่นยำจริงยังไม่มีข้อมูล เพราะต้องสะสมพยากรณ์ย้อนหลังเทียบค่าตรวจวัดก่อน</p>`}
 function agreement(){const m=S.models;if(!m||m.error||!m.T||m.T.length<2)return null;const i0=Math.max(0,m.ts.findIndex(t=>t>=Date.now()/1000-3600)),R=[];for(let i=i0;i<Math.min(m.ts.length,i0+48);i++)R.push(i);
@@ -262,9 +292,9 @@ qi.addEventListener('keydown',async e=>{
  else if(e.key==='Escape')closeList()});
 clr.onclick=()=>{sq++;clearTimeout(st);qi.value='';clr.hidden=true;closeList();qi.focus()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeList()});
-$('#ref').onclick=()=>load();
+$('#ref').onclick=()=>{load();loadWater()};
 $('#geo').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>pick({name:'ตำแหน่งปัจจุบัน',latitude:p.coords.latitude,longitude:p.coords.longitude},false),()=>{S.err='ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง ค้นหาด้วยชื่อสถานที่แทนได้';render()}):(S.err='เบราว์เซอร์ไม่รองรับการระบุตำแหน่ง',render());
 $('#menu').onclick=()=>{const o=$('#nav').classList.toggle('open');$('#menu').setAttribute('aria-expanded',o)};
-setInterval(()=>{if(!document.hidden)load()},REFRESH_MIN*60000);setInterval(render,30000);
-load();window.__twaLoaded=true;
+setInterval(()=>{if(!document.hidden)load()},REFRESH_MIN*60000);setInterval(render,30000);setInterval(()=>{if(!document.hidden)loadWater()},60*60000);
+load();loadWater();window.__twaLoaded=true;
 </script></body></html>
